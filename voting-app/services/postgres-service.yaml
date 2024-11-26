@@ -1,0 +1,16 @@
+# internal service (ClusterIP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: db # name that the result-app code uses to connect to the database
+  labels:
+    name: postgres-service
+    app: demo-voting-app
+spec:
+  # remember that the type is ClusterIP by default and do not need to specify it
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector: # use the labels from the postgres pod
+    name: postgres-pod
+    app: demo-voting-app

@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod # must be capital
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+    tier: frontend
+spec:
+  # at the pod level, this is the default security context for all containers in the pod
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
+  containers:
+  - name: nginx-container
+    image: nginx 
+    ports:
+    - containerPort: 80
+    command: ["echo", "hello"] 
+    args: ["world"] 
+    # at the container level, this will override the pod level security context for this container
+    securityContext:
+      allowPrivilegeEscalation: false
+      # capabilities are only available at the container level, not the pod level
+      capabilities:
+        add: ["MAC_ADMIN"]
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 3000
+      privileged: false

@@ -1,0 +1,17 @@
+# external service (NodePort)
+apiVersion: v1
+kind: Service
+metadata:
+  name: result-service
+  labels:
+    name: result-service
+    app: demo-voting-app
+spec:
+  type: NodePort # if running multiple pods, use a LoadBalancer type
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30005
+  selector: # use the labels from the postgres pod
+    name: result-app-pod
+    app: demo-voting-app

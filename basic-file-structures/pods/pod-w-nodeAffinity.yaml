@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Pod 
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+    tier: frontend
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx 
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: size
+            operator: In # the operator can be In, NotIn, Exists, DoesNotExist, Gt, Lt 
+            # In and NotIn are used to match a node based on a list of values
+            # Exists and DoesNotExist are used to match a node based on the existence of a label
+            # Gt and Lt are used to match a node based on the value of a label
+            values:
+            - Large
+
+# allows to specify more complex rules to match nodes based on labels 
+# as you can see, values here is a list not a single value
+
+# further examples:
+# match nodes with size=Large or size=Medium
+affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: size
+            operator: In 
+            values:
+            - Large
+            - Medium 
+
+# this will not match nodes with size=Small
+affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: size
+            operator: NotIn
+            values:
+            - Small
+
+# match nodes with size label no matter the value
+# we can choose not to label small nodes and will have the same effect as the previous example
+affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: size
+            operator: Exists

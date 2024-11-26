@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: multi-pod
+  labels:
+    app: multi-pod
+spec:
+  containers:
+  - name: simple-webapp
+    image: simple-webapp
+    ports:
+    - containerPort: 80
+  - name: nginx
+    image: nginx
+    ports:
+    - containerPort: 80
+
+# Design Patterns for multi-container pods
+# 1. Sidecar pattern
+  # The Sidecar pattern involves adding an auxiliary container to a primary container to enhance functionality without modifying the main container itself.  # - example could be a log server that collects logs from the main container and sends them to a centralized log server.
+  # Example: A logging sidecar container can be added to collect logs from the main application container and forward them to a centralized logging server.
+# 2. Adapter pattern
+  # The Adapter pattern introduces an additional container to provide a standardized interface for the main container, especially useful for handling variations in data formats or protocols.
+  # - example using the log server. If all the different log containers logged in different formats, the adapter container could be used to standardize the log format before sending it to the centralized log server.
+# 3. Ambassador pattern
+  # The Ambassador pattern places an additional container as an intermediary between the main container and external systems, acting as a bridge to manage or simplify external interactions.  # - example could be a container that provides a REST API to the main container, which is a legacy application that only supports a SOAP API.
+  # Example 1: An ambassador container can expose a REST API for a main container that only supports SOAP, making the legacy application compatible with modern clients.
+  # Example 2: In multi-environment setups (e.g., development, testing, production), an ambassador container can route requests to the appropriate environment, providing a consistent interface for users across different stages.

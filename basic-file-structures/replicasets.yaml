@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: frontend
+  labels:
+    app: myapp
+spec:
+  selector:
+    matchLabels:
+      tier: frontend # must match the labels for the pods to be managed 
+  replicas: 3
+  template: # you can paste the pod metadata and spec here
+    metadata:
+      name: myapp-pod
+      labels:
+        app: myapp # must match the label of the replica set
+        tier: frontend
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx # if not using dockerhub, use full path
+        ports:
+        - containerPort: 80

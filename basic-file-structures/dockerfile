@@ -1,0 +1,68 @@
+# steps to create a docker image
+# 1. Define OS and version
+# 2. RUN / Install package manager (apt-get, yum, apk, npm, pip, etc)
+# 2. RUN / Install dependencies (libraries, tools, etc)
+# 3. COPY the source code
+# 4. ENTRYPOINT to run the application
+# 5. move to the directory where the Dockerfile is located
+# 6. docker build -t <image_name> . (this will build the image)
+# 7. docker push <username/image_name> (this will push the image to docker hub)
+
+# C# example for Docker
+
+# Pick an OS and version to start from or you can use the official .NET Core SDK image
+FROM Ubuntu 
+WORKDIR /app
+
+# Copy csproj and restore as distinct layers
+COPY *.csproj ./
+RUN dotnet restore
+
+# Copy everything else and build
+COPY . ./
+RUN dotnet publish -c Release -o out
+
+# Use the official .NET Core runtime image as the runtime environment
+FROM mcr.microsoft.com/dotnet/aspnet:5.0
+WORKDIR /app
+COPY --from=build-env /app/out .
+
+# Expose the port the app runs on
+EXPOSE 80
+
+# Define the entry point for the application
+ENTRYPOINT ["dotnet", "YourApp.dll"]
+
+# GoLang example for Docker
+# Use the official Golang image as the build environment
+FROM golang:1.16 AS build-env
+WORKDIR /app
+
+# Copy the go.mod and go.sum files and download dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the source code into the container
+COPY . ./
+
+# Build the Go application
+RUN go build -o main .
+
+# Use a minimal base image for the runtime environment
+FROM alpine:latest
+WORKDIR /root/
+
+# Copy the built Go binary from the build environment
+COPY --from=build-env /app/main .
+
+# Expose the port the app runs on
+EXPOSE 8080
+
+# Define the entry point for the application
+ENTRYPOINT ["./main"]
+
+# upload image to docker hub
+# docker build -t hello-world .
+# docker tag hello-world:latest <dockerhub_username>/hello-world:latest 
+# docker push <dockerhub_username>/hello-world:latest
+

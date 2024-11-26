@@ -1,0 +1,16 @@
+# Internal service (ClusterIP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis # name that the voting-app code uses to connect to the in-memory database (Redis)
+  labels:
+    name: redis-service
+    app: demo-voting-app
+spec:
+  # remember that the type is ClusterIP by default
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector: # use the labels from the redis pod
+    name: redis-pod
+    app: demo-voting-app

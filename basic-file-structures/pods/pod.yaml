@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod # must be capital
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+    tier: frontend
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx # if not using dockerhub, use full path
+    ports:
+    - containerPort: 80
+    command: ["echo", "hello"] # can override the default Entrypoint of the Docker image
+    args: ["world"] # can override the default CMD of the Docker image
+    env: # is an array of key-value pairs, we can also use ConfigMap and Secrets
+    - name: APP_COLOR
+      value: pink\
+      # ConfigMap - used when you have a lot of Pod definition files (it will be easier to manage)
+        # essentially the information is stored centrally rather than in each Pod definition file
+        # 1. Create the ConfigMap. 
+          # kubectl create configmap <config-name> --from-literal=<key>=<value> or --from-file=<path-to-file>
+          # or kubectl create -f config-map.yaml
+        # 2. Reference it in the Pod definition file
+    #  use envFrom for multiple ConfigMaps:
+    - name: APP_NAME
+      valueFrom:
+        configMapKeyRef:
+          name: app-config # name of the ConfigMap (metadata.name)
+      # Secrets
+    - name: APP_COLOR
+      valueFrom:
+        secretKeyRef:

@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-wear
+spec:
+  rules:
+    - http:
+        paths:
+        - path: /wear
+          pathType: Prefix
+          backend:
+            service:
+              name: wear-service
+              port:
+                number: 80
+
+# this is to create an ingress resource that will route traffic to the wear-service
+
+# kubectl get ingress to see the ingress resources

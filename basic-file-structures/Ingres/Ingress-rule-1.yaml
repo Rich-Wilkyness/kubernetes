@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-wear-watch
+spec:
+  rules:
+    - http:
+        paths:
+        - path: /wear
+          pathType: Prefix
+          backend:
+            service:
+              name: wear-service
+              port:
+                number: 80
+        - path: /watch
+          pathType: Prefix
+          backend:
+            service:
+              name: watch-service
+              port:
+                number: 80
+
+# if you run kubectl describe ingress ingress-wear-watch you will see the rules that are created for the ingress resource

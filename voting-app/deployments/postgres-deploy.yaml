@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: posgres-deploy
+  labels:
+    name: postgres-deploy
+    app: demo-voting-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: postgres-pod
+      app: demo-voting-app
+  template:
+    metadata:
+      name: postgres-pod
+      labels:
+        name: postgres-pod
+        app: demo-voting-app
+    spec:
+      containers:
+        - name: postgres
+          image: postgres
+          ports:
+            - containerPort: 5432 # PostgreSQL uses port 5432 by default
+          env: # in a more advanced course, you'll learn how to use ConfigMaps and Secrets to manage environment variables. And not expose them in the pod definition file.
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_USER
+              value: "postgres"
