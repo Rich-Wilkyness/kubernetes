@@ -5,8 +5,20 @@
 - `alias k=kubectl`
 - Root privileges can be obtained by running `sudo -i`.
 
-- `o wide` - to get IP addresses and nodes
+- `k pod --help` - get help for the pod command
+- `-o wide` - to get IP addresses and nodes
 - `--rm` for temporary containers
+- `--expose` add this to a pod command to create a service for the pod automatically (it creates a ClusterIP service)
+- `kubectl exec ubuntu-sleeper -- whoami` used to see who is running the command in the container
+- `kubectl get pods -l 'team in (shiny, legacy)',env=prod --show-labels`
+- `kubectl get pods -o yaml | grep -C 3 'annotations:'`
+- `cat /etc/*release*` - to see the OS version
+
+#### HUGE `k explain pod.spec` 
+- get help for the pod.spec field
+- just add a `.` with the field you want to get options for. cant remember the field name?
+
+
 
 - kubectl config use-context <context-name> 
   - switch between contexts (clusters, users, namespaces)
@@ -29,6 +41,8 @@
 - jobs, cronjobs
 ## rbac.authorization.k8s.io/v1
 - roles, rolebindings, clusterroles, clusterrolebindings
+## networking.k8s.io/v1
+- networkpolicies, ingresses
 
 # Logging
 - `kubectl logs -f <pod-name> <container-name>`
@@ -39,6 +53,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: myapp
+  annotations: # Unlike labels, annotations are not used to identify and select objects. Instead, they are used to store additional information that can be useful for various purposes. build details, contact information, or any other data that might be relevant to the object. can be used by tools and automation scripts to store and retrieve information. For example, CI/CD pipelines might use annotations to store build and deployment information.
+    commit: 2d3mg3 # Stores the commit hash of the deployed code
+    contact: John Doe # Stores contact information for the person responsible for the deployment
 spec:
   replicas: 3
   selector:
@@ -52,16 +69,27 @@ spec:
       # kubectl create serviceaccount my-service-account (bot account)
       # setup token for service account Configuration/serviceAccounts.md
       securityContext: # applied to pod or container level (container level takes precedence)
-        runAsUser: 1000 # all processes in the container will run as this user
+        runAsUser: 1000 # all processes in the container will run as this user, to run as root user, just delete this line.
         capabilities:
           add: ["MAC_ADMIN"] # allows for container to perform Mandatory Access Control operations
         allowPrivilegeEscalation: false # prevents the container from gaining more privileges than it started with
-      serviceAccountName: my-service-account # provides the pod with AuthN/AuthZ (tokens, roles, secrets)
+        readOnlyRootFilesystem: true # prevents the container from writing to the root filesystem, (stops the container from writing to the temporary filesystem)
+      serviceAccountName: my-service-account # provides the pod with AuthN/AuthZ (tokens, roles, secrets). Links to the sa created in the namespace, usually for tokens.
       volumes:
       - name: mypodvolume
         persistentVolumeClaim:
           claimName: mypvc
-            # kubectl label nodes <node-name> disktype=ssd
+      - name: mypodvolume2
+        emptyDir: {} # ephemeral storage, deleted when pod is deleted
+      - name: mypodvolume3
+        hostPath:
+          path: /tmp/data
+          type: DirectoryOrCreate # create the directory if it does not exist
+      - name: mypodvolume4
+        awsElasticBlockStore:
+          volumeID: <volume-id>
+          fsType: ext4
+      # kubectl label nodes <node-name> disktype=ssd
       affinity:
           nodeAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
@@ -120,15 +148,26 @@ spec:
           limits:
             memory: "128Mi"
             cpu: "500m"
-          requests:
+          requests: # The status OOMKilled indicates that it is failing because the pod ran out of memory
             memory: "64Mi"
             cpu: "200m" # 200m or 0.2 cores
         env:
         - name: MYVAR
           valueFrom:
             configMapKeyRef:
-              name: mysecret
-              key: mykey
+              name: mysecret # name of the configmap
+              key: mykey # key in the configmap
+        - name: MYVAR2
+          valueFrom:
+            secretKeyRef:
+              name: mysecret # name of the secret
+              key: mykey # key in the secret
+        - name: MYVAR3
+          value: "myvalue" # value directly in the env
+        - name: MYVAR4
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace # namespace of the pod
       
 
 ---
@@ -143,7 +182,7 @@ spec:
         - ReadWriteOnce
     hostPath:
         path: /tmp/data
----
+--- 
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -237,3 +276,17 @@ Review Ingress, Network Policies, directly
 
 
 ![resource shortcuts](image.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+The ReplicaSet "replicaset-2" is invalid: spec.template.metadata.labels: Invalid value: map[string]string{"tier":"nginx"}: `selector` does not match template `labels`

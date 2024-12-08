@@ -63,17 +63,34 @@
         apiVersion: rbac.authorization.k8s.io/v1
         kind: RoleBinding # this will bind the role to a user/group
         metadata:
-            name: dev-user-developer-binding
-            namespace: my-app 
+          name: dev-user-developer-binding
+          namespace: my-app 
         subjects:
         - kind: User # can be a user, group, or service account
-            name: alice
-            apiGroup: rbac.authorization.k8s.io
+          name: alice
+          apiGroup: rbac.authorization.k8s.io
         roleRef:
-            kind: Role
-            name: developer
-            apiGroup: rbac.authorization.k8s.io
+          kind: Role
+          name: developer
+          apiGroup: rbac.authorization.k8s.io
         ```
+
+        ```yaml
+        kind: RoleBinding
+        apiVersion: rbac.authorization.k8s.io/v1
+        metadata:
+          name: read-pods
+          namespace: default
+        subjects:
+        - kind: ServiceAccount
+          name: dashboard-sa # Name is case sensitive
+          namespace: default
+        roleRef:
+          kind: Role #this must be Role or ClusterRole
+          name: pod-reader # this must match the name of the Role or ClusterRole you wish to bind to
+          apiGroup: rbac.authorization.k8s.io
+        ``` 
+
     - **Cluster Roles**
         - resources are either namespaced or cluster-scoped.
         - kubernetes sets up default ClusterRoles when it is installed. 

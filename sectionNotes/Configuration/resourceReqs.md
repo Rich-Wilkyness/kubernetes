@@ -93,12 +93,14 @@ spec:
 # Resource Quotas
 - resource quotas can be used to limit the amount of resources that can be used in a namespace
     - this can be used to prevent a single pod from using all the resources in a namespace
+    - If a resource quota is created after pods have already been deployed in the namespace, Kubernetes will enforce the quota on any new resource requests or changes to existing resources.
 
 ```yaml
 apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: my-resource-quota
+  namespace: my-namespace
 spec:
   hard:
     requests.cpu: "4"

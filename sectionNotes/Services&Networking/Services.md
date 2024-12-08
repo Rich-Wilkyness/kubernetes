@@ -86,12 +86,12 @@ metadata:
 spec:
   type: NodePort
   ports:
-    - port: 80 # each set of the 3 different kinds of ports is an item in the array
+    - port: 80 
       targetPort: 80
       nodePort: 30080 # if you don't specify a nodePort, Kubernetes will assign one automatically from the range 30000-32767
     - port: 443
       targetPort: 443
-  selector: # you use the deployment file under the spec.template.metadata.labels section, not the metadata.labels section (for deployment, you use the metadata.labels section for Pod files) 
+  selector: # you use the deployment file under the spec.template.metadata.labels section, not the metadata.labels section (you use the metadata.labels section for Pod files) 
     app: myapp
 ```
 

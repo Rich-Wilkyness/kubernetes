@@ -14,7 +14,7 @@
 
 - commands:
     - label a node:
-        - kubectl label nodes <node-name> <label-key>=<label-value>
+        - `kubectl label nodes <node-name> <label-key>=<label-value>`
 
 # Node Affinity
 - Node affinity is a property of pods that attracts them to a set of nodes (either as a preference or a hard requirement).
