@@ -9,10 +9,19 @@
 - `-o wide` - to get IP addresses and nodes
 - `--rm` for temporary containers
 - `--expose` add this to a pod command to create a service for the pod automatically (it creates a ClusterIP service)
+  - `kubectl expose deployment <deploy-name> --name=<name-of-service> --port=6379 --target-port=6379`
 - `kubectl exec ubuntu-sleeper -- whoami` used to see who is running the command in the container
 - `kubectl get pods -l 'team in (shiny, legacy)',env=prod --show-labels`
 - `kubectl get pods -o yaml | grep -C 3 'annotations:'`
 - `cat /etc/*release*` - to see the OS version
+- `-l` is for getting pods with specific labels, while `--labels` is for setting labels on a resource
+
+# Rollout Commands
+- `k rollout history deploy <deploy-name>`
+- `kubectl annotate <resource-type> <resource-name> update-reason="Updated image to latest version"` or `kubectl annotate deployment nginx kubernetes.io/change-cause="Pick up patch version"`
+  - the `update-reason` only adds an annotation, but not a rollout history note. 
+  - this will add the reason to the rollout histories most recent revision
+- `kubectl rollout undo deploy <deploy-name> --to-revision=1`
 
 #### HUGE `k explain pod.spec` 
 - get help for the pod.spec field
@@ -56,7 +65,15 @@ metadata:
   annotations: # Unlike labels, annotations are not used to identify and select objects. Instead, they are used to store additional information that can be useful for various purposes. build details, contact information, or any other data that might be relevant to the object. can be used by tools and automation scripts to store and retrieve information. For example, CI/CD pipelines might use annotations to store build and deployment information.
     commit: 2d3mg3 # Stores the commit hash of the deployed code
     contact: John Doe # Stores contact information for the person responsible for the deployment
+  labels:
+    app: myapp
+    mvc: view
 spec:
+  strategy:
+    type: RollingUpdate # RollingUpdate or Recreate
+    rollingUpdate:
+      maxSurge: 1 # The number of pods that can be created above the desired number of pods during the update process
+      maxUnavailable: 2 # The number of pods that can be unavailable during the update process
   replicas: 3
   selector:
     matchLabels:
@@ -69,7 +86,8 @@ spec:
       # kubectl create serviceaccount my-service-account (bot account)
       # setup token for service account Configuration/serviceAccounts.md
       securityContext: # applied to pod or container level (container level takes precedence)
-        runAsUser: 1000 # all processes in the container will run as this user, to run as root user, just delete this line.
+        runAsUser: 1000 # all processes in the container will run as this user, to run as root use 0
+        # cannot add capabilities here, must be added to the container level (spec.containers.securityContext.capabilities.add)
         capabilities:
           add: ["MAC_ADMIN"] # allows for container to perform Mandatory Access Control operations
         allowPrivilegeEscalation: false # prevents the container from gaining more privileges than it started with
@@ -89,6 +107,12 @@ spec:
         awsElasticBlockStore:
           volumeID: <volume-id>
           fsType: ext4
+      - name: mypodvolume5
+        configMap:
+          name: myconfigmap
+          items: # only include specific keys from the configmap
+          - key: key1
+          - key: key2
       # kubectl label nodes <node-name> disktype=ssd
       affinity:
           nodeAffinity:
@@ -123,7 +147,8 @@ spec:
           name: mypodvolume # name of the volume (pod.spec.volumes.name)
         ports:
         - containerPort: 80 # port that the service will target
-        command: ["/bin/sh", "-c", "echo Hello Kubernetes! && sleep 3600"]
+        # use sh -c when you need to run multiple commands. Could have just had ['sleep', '3600']
+        command: ["/bin/sh", "-c", "echo Hello Kubernetes! && sleep 3600"] # /bin/sh is the most reliable way to run commands in a container, don't just use /sh or /bash
         readinessProbe:
           httpGet: # web server
             path: /index.html
@@ -267,11 +292,95 @@ spec:
             image: my-reporting-image
             command: ["generate-report"]
           restartPolicy: OnFailure
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-to-db
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend # The network policy applies to pods with the label app: frontend
+  policyTypes:
+  - Egress
+  egress:
+  - to: # The egress rule allows traffic to the database pod
+    - podSelector:
+        matchLabels:
+          app: db
+    ports: # note port is on the same level as to, not under to
+    - protocol: TCP
+      port: 3306 # Assuming the db pod is listening on port 3306
 ```
 
+# Docker
+- `docker build -t myapp .` - build a docker image from the Dockerfile in the current directory and tag it as myapp
+- `docker run -d -p 3080:80 myapp` - run the myapp image in a container in detached mode and map port 3080 on the host to port 80 in the container
+  - `docker ps` - list running containers 
+  - `docker exec -it <container-id> sh` - sh into the container
+  - `curl localhost:3080` - test the container
+
+## Pushing to Docker Hub
+- `docker tag myapp <dockerhub-username>/myapp` - tag the myapp image with your Docker Hub username
+- `docker login` - log in to Docker Hub
+- `docker push <dockerhub-username>/myapp` - push the image to Docker Hub
 
 
-Review Ingress, Network Policies, directly
+# Review Ingress
+1. create deployment(name=webapp, label:app=webapp) and service (80:80)
+2. create ingress resource
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webapp-ingress
+  # When to Use nginx.ingress.kubernetes.io/rewrite-target
+    # Path Rewriting: If you want to rewrite the incoming request path to a different path before forwarding it to the backend service, you should use this annotation.
+    # Simplifying Backend Paths: This is useful when your backend service expects requests to a specific path, but you want to expose a different path to the clients.
+  annotations:
+    # This annotation rewrites the incoming request path /backend to / before forwarding it to the backend-service (the code).
+    nginx.ingress.kubernetes.io/rewrite-target: /
+
+spec:
+  rules:
+  # host must follow DNS naming conventions
+  # can use a wildcard to match all subdomains (*.example.com) 
+  # each host value must be unique if you define multiple rules with the same host, only the first rule will be used
+  # host is an optional field, if not defined, the rule applies to all inbound HTTP traffic
+  # host must match the Common Name or Subject Alternative Name in the SSL or TLS certificate
+  # should match the domain purchased from a domain registrar
+  - host: webapp.example.com # domain name (not dictated by the path)
+    http:
+      # the paths should match the routes in the application
+      # by usign Prefix, you can access any path that starts with /backend without having to define each path individually 
+      paths:
+      - path: /backend # path to match for the rule to apply 
+        pathType: Exact # this means you can only access the backend service by going to webapp.example.com/backend (no trailing slash - webapp.example.com/backend/api)
+        backend:
+          service:
+            name: backend-service # name of the service to forward the request to 
+            port:
+              number: 80
+      - path: /frontend
+        pathType: Prefix
+        backend: 
+          service:
+            name: frontend-service
+            port:
+              number: 80
+  - host: example.com
+    http:
+      paths: 
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webapp-service
+            port:
+              number: 80
+```
 
 
 

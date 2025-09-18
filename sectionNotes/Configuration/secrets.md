@@ -15,7 +15,7 @@ metadata:
   name: mysecret
 type: Opaque # default type, can store arbitrary key-value pairs
 data:
-    username: yourusername
+    username: yourusername # this wont work unless you base64 encode it and store the encoded value
     password: XxX
 ```
 

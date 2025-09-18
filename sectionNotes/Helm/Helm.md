@@ -77,6 +77,7 @@ containerPort: 80
 - pull down a chart
     - `helm pull --untar <repo-name>/<chart-name>`
         - `--untar` will untar the chart (extract the files)
+    - if you forget the name of the chart it's in the Chart.yaml file
 - install a chart
     - `helm install <release-name> <chart-name>`
         - `helm install release-1 bitnami/wordpress`
@@ -106,3 +107,5 @@ How many helm repositories are added in the controlplane node?
 
 How to get the release name of a chart package we installed?
 - `helm list` - will show name version 
+
+

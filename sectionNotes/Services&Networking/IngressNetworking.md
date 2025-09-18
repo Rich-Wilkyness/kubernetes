@@ -52,3 +52,5 @@ https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types
  https://github.com/kubernetes/
  https://kubernetes.io/blog/ 
  -->
+
+ 114.48 + 18.55 + 23.95 + 2.03 = 159.01

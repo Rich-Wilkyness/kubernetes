@@ -9,6 +9,11 @@
     - then run: `kubectl logs -f <pod-name>`
     - this will fail if the pod has more than one container
         - to see logs from a specific container, use: `kubectl logs -f <pod-name> <container-name>`
+    - export logs
+        - question: Export the logs of the e-com-1123 pod to the file /opt/outputs/e-com-1123.logs 
+        - It is in a different namespace. Identify the namespace first.
+            - `kubectl get pods --all-namespaces`
+            - `kubectl logs e-com-1123 -n <namespace> > /opt/outputs/e-com-1123.logs`
 
 
 # Monitoring & Debugging
